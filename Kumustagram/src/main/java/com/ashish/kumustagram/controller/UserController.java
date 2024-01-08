@@ -298,4 +298,13 @@ public class UserController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+
+    @GetMapping("/my/posts")
+    public ResponseEntity<?> getMyPosts(@CookieValue("kumustagram") String kumustagram){
+        User user = userService.getUserFromCookie(kumustagram);
+        PostResponse response = new PostResponse();
+        response.setPosts(user.getPosts());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }
