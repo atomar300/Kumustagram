@@ -307,4 +307,13 @@ public class UserController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+
+    @GetMapping("/userposts/{id}")
+    public ResponseEntity<?> getUserPosts(@PathVariable("id") String id){
+        User user = userService.findById(id);
+        PostResponse response = new PostResponse();
+        response.setPosts(user.getPosts());
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }
