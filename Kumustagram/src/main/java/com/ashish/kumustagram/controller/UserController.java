@@ -122,8 +122,10 @@ public class UserController {
         UserResponse response = new UserResponse();
 
         if (loggedInUser.getFollowing().contains(id)){
-            loggedInUser.setFollowing(loggedInUser.getFollowing().stream().filter(e -> !e.equals(id)).collect(Collectors.toList()));
-            userToFollow.setFollowers(userToFollow.getFollowers().stream().filter(e -> !e.equals(loggedInUser.getId())).collect(Collectors.toList()));
+            //loggedInUser.setFollowing(loggedInUser.getFollowing().stream().filter(e -> !e.equals(id)).collect(Collectors.toList()));
+            //userToFollow.setFollowers(userToFollow.getFollowers().stream().filter(e -> !e.equals(loggedInUser.getId())).collect(Collectors.toList()));
+            loggedInUser.getFollowing().remove(id);
+            userToFollow.getFollowers().remove(loggedInUser.getId());
 
             response.setMessage("User Unfollowed");
         } else {
@@ -194,6 +196,71 @@ public class UserController {
         response.setMessage("Profile Updated");
 
         return ResponseEntity.ok().body(response);
+    }
+
+
+    @DeleteMapping("/delete/me")
+    public ResponseEntity<?> deleteMyProfile(@CookieValue("kumustagram") String kumustagram){
+        User user = userService.getUserFromCookie(kumustagram);
+
+        List<Post> posts = user.getPosts();
+        List<String> followers = user.getFollowers();
+        List<String> followings = user.getFollowing();
+        String userId = user.getId();
+
+        userService.deleteAvatar(user.getAvatar().getPublic_id());
+        userService.delete(user);
+
+        // Logging out the user
+        // Setting the security context to null
+        SecurityContextHolder.getContext().setAuthentication(null);
+
+        // Setting the value of cookie to empty String
+        ResponseCookie cookie = jwtUtils.getCleanJwtCookie();
+
+
+        // Delete all posts of the user
+        posts.stream().forEach(p -> {
+            postService.deleteImage(p.getImage().getPublic_id());
+            postService.delete(p);
+        });
+
+        // Removing User from Followers Following
+        followers.stream().forEach(f  -> {
+            User follower = userService.findById(f);
+            follower.getFollowing().remove(userId);
+            //follower.getFollowing().removeIf(u -> u.equals(userId));
+            userService.save(follower);
+        });
+
+        // Removing User from Following's Followers
+        followings.stream().forEach(f  -> {
+            User follows = userService.findById(f);
+            follows.getFollowers().remove(userId);
+            //follows.getFollowers().removeIf(u -> u.equals(userId));
+            userService.save(follows);
+        });
+
+        List<Post> allPosts = postService.findAll();
+
+        // removing all comments of the user from all posts
+        allPosts.stream().forEach(p -> {
+            p.getComments().removeAll(p.getComments().stream().filter(c -> c.getUser().equals(userId)).collect(Collectors.toList()));
+            //p.getComments().removeIf(c -> c.getUser().equals(userId));
+            postService.save(p);
+        });
+
+        // removing all likes of the user from all posts
+        allPosts.stream().forEach(p -> {
+            p.getLikes().removeAll(p.getLikes().stream().filter(l -> l.equals(userId)).collect(Collectors.toList()));
+            //p.getLikes().removeIf(l -> l.equals(userId));
+            postService.save(p);
+        });
+
+        UserResponse response = new UserResponse();
+        response.setMessage("Profile Deleted");
+
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 
