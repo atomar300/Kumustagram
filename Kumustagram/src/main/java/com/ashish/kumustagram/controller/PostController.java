@@ -69,7 +69,8 @@ public class PostController {
 
         postService.delete(post);
 
-        user.setPosts(user.getPosts().stream().filter(e -> !e.getId().equals(id)).collect(Collectors.toList()));
+        //user.setPosts(user.getPosts().stream().filter(e -> !e.getId().equals(id)).collect(Collectors.toList()));
+        user.getPosts().remove(post);
 
         userService.save(user);
 
@@ -89,7 +90,8 @@ public class PostController {
         PostResponse response = new PostResponse();
 
         if (post.getLikes().contains(user.getId())){
-            post.setLikes(post.getLikes().stream().filter(e -> !e.equals(user.getId())).collect(Collectors.toList()));
+            //post.setLikes(post.getLikes().stream().filter(e -> !e.equals(user.getId())).collect(Collectors.toList()));
+            post.getLikes().remove(user.getId());
             response.setMessage("Post Unliked");
         } else {
             post.getLikes().add(user.getId());
