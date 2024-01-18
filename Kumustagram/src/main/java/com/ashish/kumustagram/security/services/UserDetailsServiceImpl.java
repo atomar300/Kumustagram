@@ -1,6 +1,6 @@
 package com.ashish.kumustagram.security.services;
 
-
+import com.ashish.kumustagram.exception.UserNotFoundException;
 import com.ashish.kumustagram.model.user.User;
 import com.ashish.kumustagram.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,9 +24,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return UserDetailsImpl.build(user);
     }
 
+    @Transactional
     public UserDetails loadUserById(String id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new UsernameNotFoundException("No User found with the given ID: " + id));
+                .orElseThrow(() -> new UserNotFoundException("No User found with the given ID: " + id));
         return UserDetailsImpl.build(user);
     }
 
